@@ -2,7 +2,9 @@ package io.autodidact.dragshadowtester;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.graphics.Point;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.DragEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -22,6 +24,20 @@ public class MainActivity extends AppCompatActivity {
     int i = 0;
     DragWrapper mCurrentDragger;
 
+    static final String TAG = "DragShadowBuilder";
+
+    static class DragShadow extends View.DragShadowBuilder {
+        DragShadow(View view) {
+            super(view);
+        }
+
+        @Override
+        public void onProvideShadowMetrics(Point outShadowSize, Point outShadowTouchPoint) {
+            super.onProvideShadowMetrics(outShadowSize, outShadowTouchPoint);
+            Log.d(TAG, "onProvideShadowMetrics: " + outShadowSize + "  " + outShadowTouchPoint);
+        }
+    }
+
     class DragWrapper implements View.OnTouchListener, View.OnDragListener {
         final View mView;
         DragWrapper(View v) {
@@ -33,7 +49,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean onTouch(View view, MotionEvent motionEvent) {
             if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
-                mView.startDragAndDrop(null, new View.DragShadowBuilder(mView), null, 0);
+                Log.d(TAG, "Drag START " + mView);
+                mView.startDragAndDrop(null, new DragShadow(mView), null, 0);
                 mCurrentDragger = this;
                 return true;
             }
@@ -44,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         public boolean onDrag(View view, DragEvent dragEvent) {
             if (dragEvent.getAction() == DragEvent.ACTION_DRAG_ENDED && mCurrentDragger == this) {
                 mCurrentDragger = null;
+                Log.d(TAG, "Drag END " + mView);
             }
             return true;
         }
@@ -76,7 +94,8 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 mShadow = shadows[i++ % shadows.length];
                 if (mCurrentDragger != null) {
-                    mCurrentDragger.mView.updateDragShadow(new View.DragShadowBuilder(mShadow));
+                    Log.d(TAG, "Drag shadow UPDATE " + mShadow);
+                    mCurrentDragger.mView.updateDragShadow(new DragShadow(mShadow));
                 }
             }
         }, 0, 1000);
